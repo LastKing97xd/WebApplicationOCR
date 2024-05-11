@@ -1,0 +1,55 @@
+﻿ @using Azure.AI.Vision.ImageAnalysis
+
+<form asp-action="AnalyzeImage" asp-controller="Home" method="post" enctype="multipart/form-data">
+    <div style="margin-bottom: 20px;">
+        <label for="image" style="display: block; font-size: 16px;">Selecciona una imagen:</label>
+        <input type="file" id="image" name="image" accept="image/*" onchange="previewImage(event)">
+    </div>
+    <img id="preview" src="#" alt="Vista previa de la imagen" style="display: none; max-width: 100%; max-height: 300px; margin-bottom: 20px">
+    <button type="submit" style="background-color: #007bff; color: #fff; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer;">Analizar Imagen</button>
+
+</form>
+
+@if (Model != null && Model.Read != null)
+{
+    <div class="analysis-results">
+        <h4 class="results-header">Resultados del análisis de imagen:</h4>
+        <textarea rows="10" cols="50" readonly>@GetAnalysisResult(Model)</textarea>
+    </div>
+}
+
+@functions {
+    public string GetAnalysisResult(ImageAnalysisResult result)
+    {
+        var analysisResult = new System.Text.StringBuilder();
+
+        analysisResult.AppendLine("Lectura:");
+        foreach (var block in result.Read.Blocks)
+        {
+            foreach (var line in block.Lines)
+            {
+                analysisResult.AppendLine($"   Line: '{line.Text}'");
+                foreach (var word in line.Words)
+                {
+                    analysisResult.AppendLine($"     Word: '{word.Text}'");
+                }
+            }
+        }
+
+        return analysisResult.ToString();
+    }
+}
+
+<script>
+    function previewImage(event) {
+        var input = event.target;
+        var reader = new FileReader();
+        reader.onload = function () {
+            var preview = document.getElementById('preview');
+            preview.src = reader.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+</script>
+
