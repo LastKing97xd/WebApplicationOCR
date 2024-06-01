@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using WebApplicationOCR.Models;
 using Azure.Storage.Blobs;
+using System.Linq;
+using System.Text;
 
 namespace WebApplicationOCR.Controllers
 {
@@ -28,7 +30,7 @@ namespace WebApplicationOCR.Controllers
                 // parte el texto y manda lo que se necesita
                 string base64Image = model.CapturedImage.Split(',')[1];
                 // Convertir la cadena base64 en un array de bytes
-                byte[] imageBytes = Convert.FromBase64String(base64Image);
+                byte[] imageBytes = Convert.FromBase64String(base64Image); 
 
                 using (var memoryStream = new MemoryStream(imageBytes))
                 {
@@ -65,7 +67,39 @@ namespace WebApplicationOCR.Controllers
                 VisualFeatures.Read,
                 new ImageAnalysisOptions { GenderNeutralCaption = true });
 
-            return View("Index", result);
+            //return View("Index", result);
+
+            var analysisResult = ExtractFields(result);
+
+            return View("Index", analysisResult);
+        }
+
+        private AnalysisResultModel ExtractFields(ImageAnalysisResult result)
+        {
+            var analysisResult = new AnalysisResultModel();
+
+            foreach (var block in result.Read.Blocks)
+            {
+                foreach (var line in block.Lines)
+                {
+                    var text = line.Text.ToLower();
+
+                    if (text.Contains("direccion"))
+                    {
+                        analysisResult.Direccion = text.Replace("direccion:", "").Trim();
+                    }
+                    else if (text.Contains("telefono"))
+                    {
+                        analysisResult.Cliente = text.Replace("telefono :", "").Trim();
+                    }
+                    else if (text.Contains("total"))
+                    {
+                        analysisResult.Importe = text.Replace("total", "").Trim();
+                    }
+                }
+            }
+
+            return analysisResult;
         }
 
         //public IActionResult AnalyzeImage(HomeModel model)

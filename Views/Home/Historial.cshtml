@@ -1,4 +1,96 @@
-﻿@using Azure.AI.Vision.ImageAnalysis
+﻿@*  @using Azure.AI.Vision.ImageAnalysis
+
+<form asp-action="AnalyzeImage" asp-controller="Home" method="post" enctype="multipart/form-data">
+    <div style="margin-bottom: 20px;">
+        <label for="image" style="display: block; font-size: 16px;">Selecciona una imagen:</label>
+        <input type="file" id="image" name="image" accept="image/*" onchange="previewImage(event)">
+    </div>
+    <img id="preview" src="#" alt="Vista previa de la imagen" style="display: none; max-width: 100%; max-height: 300px; margin-bottom: 20px">
+    <button type="submit" style="background-color: #007bff; color: #fff; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer;">Analizar Imagen</button>
+
+</form>
+
+@if (Model != null && Model.Read != null)
+{
+    <div class="analysis-results">
+        <h4 class="results-header">Resultados del análisis de imagen:</h4>
+        <textarea rows="10" cols="50" readonly>@GetAnalysisResult(Model)</textarea>
+    </div>
+}
+
+@functions {
+    public string GetAnalysisResult(ImageAnalysisResult result)
+    {
+        var analysisResult = new System.Text.StringBuilder();
+
+        analysisResult.AppendLine("Lectura:");
+        foreach (var block in result.Read.Blocks)
+        {
+            foreach (var line in block.Lines)
+            {
+                analysisResult.AppendLine($"   Line: '{line.Text}'");
+                foreach (var word in line.Words)
+                {
+                    analysisResult.AppendLine($"     Word: '{word.Text}'");
+                }
+            }
+        }
+
+        return analysisResult.ToString();
+    }
+}
+
+<script>
+    function previewImage(event) {
+        var input = event.target;
+        var reader = new FileReader();
+        reader.onload = function () {
+            var preview = document.getElementById('preview');
+            preview.src = reader.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+</script>
+
+<script>
+    // Obtener elementos del DOM
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureButton = document.getElementById('captureButton');
+
+    // Obtener acceso a la cámara
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            video.srcObject = stream;
+        })
+        .catch(err => {
+            console.error('Error al acceder a la cámara: ', err);
+        });
+
+    // Función para capturar imagen
+    captureButton.addEventListener('click', () => {
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convertir la imagen a formato base64
+        const imageDataUrl = canvas.toDataURL('image/jpeg');
+
+        // Crear un campo de formulario oculto y asignarle el valor de la imagen
+        const hiddenInput = document.createElement('input');
+        hiddenInput.setAttribute('type', 'hidden');
+        hiddenInput.setAttribute('name', 'imageBase64');
+        hiddenInput.setAttribute('value', imageDataUrl);
+        document.getElementById('imageForm').appendChild(hiddenInput);
+
+        // Enviar el formulario
+        document.getElementById('imageForm').submit();
+    });
+</script>
+
+
+ *@
+ @using Azure.AI.Vision.ImageAnalysis
 
 <form asp-action="AnalyzeImage" asp-controller="Home" method="post" enctype="multipart/form-data">
     <div style="margin-bottom: 20px;">
@@ -56,6 +148,7 @@
         return analysisResult;
     }
 } *@
+
 
 @* @if (Model != null && Model.Read != null)
 {
